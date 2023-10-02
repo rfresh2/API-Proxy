@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const slowDown = require('express-slow-down')
 const errorHandler = require('./middleware/error');
 require('dotenv').config();
 
@@ -11,9 +12,19 @@ const app = express();
 // Rate Limiting
 const limiter = rateLimit({
   windowMS: 10 * 60 * 1000, // 10 mins
-  max: 250,
+  max: 1000,
+});
+const speedLimiter = slowDown({
+  windowMS: 10 * 60 * 1000, // 10 mins
+  delayAfter: 800,
+  delayMs: 500,
+  maxDelayMs: 3000,
+  onLimitReached: function (req, res, options) {
+    console.log('!Speed limiter reached limit!')
+  }
 });
 app.use(limiter);
+app.use(speedLimiter)
 app.set('trust proxy', 1);
 
 // Routes
