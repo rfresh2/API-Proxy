@@ -32,11 +32,15 @@ router.get('/**', async (req, res, next) => {
     const dest = `${API_BASE_URL}${req.url}`
     const apiRes = await needle('get', dest, options);
     const data = apiRes.body;
-    console.log(`${apiRes.statusCode} ${dest}`)
+    logT(`${apiRes.statusCode} ${dest}`)
     res.status(apiRes.statusCode).set(apiRes.headers).send(data);
   } catch (error) {
     next(error);
   }
 });
+
+function logT(msg) {
+  console.log(`${new Date().toISOString()} ${msg}`)
+}
 
 module.exports = router;
