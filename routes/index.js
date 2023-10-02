@@ -29,7 +29,6 @@ router.get('/**', cache('2 minutes'), async (req, res, next) => {
       headers: reqHeaders
     }
     const dest = `${API_BASE_URL}${req.url}`
-    console.log(dest)
     const apiRes = await needle('get', dest, options);
     const data = apiRes.body;
     console.log(`${apiRes.statusCode} ${dest}`)
