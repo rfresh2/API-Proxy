@@ -23,10 +23,8 @@ router.get('/**', cache('2 minutes'), async (req, res, next) => {
       next(new Error("Unsupported route: " + req.url))
       return;
     }
-    let reqHeaders = req.headers;
-    reqHeaders['User-Agent'] = enforcedHeaders['User-Agent'];
-    reqHeaders['Connection'] = enforcedHeaders['Connection'];
-    reqHeaders['Authorization'] = enforcedHeaders['Authorization'];
+    let reqHeaders = enforcedHeaders;
+    reqHeaders['Accept'] = req.headers['accept'];
     const options = {
       headers: reqHeaders
     }
