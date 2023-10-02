@@ -18,8 +18,7 @@ let cache = apicache.middleware;
 router.get('/**', async (req, res, next) => {
   try {
     // only proxy for my own repo. i don't forsee any valid use case otherwise
-    let agent = req.headers['user-agent']
-    if (!req.url.startsWith("/repos/rfresh2/ZenithProxy") || agent == null || !agent.startsWith("zenithproxy")) {
+    if (!req.url.startsWith("/repos/rfresh2/ZenithProxy")) {
       res.status(500)
       next(new Error("Unsupported route: " + req.url))
       return;
