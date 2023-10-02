@@ -15,10 +15,12 @@ const enforcedHeaders = {
 // Initialize cache
 let cache = apicache.middleware;
 
-router.get('/**', cache('2 minutes'), async (req, res, next) => {
+router.get('/**', async (req, res, next) => {
   try {
     // only proxy for my own repo. i don't forsee any valid use case otherwise
-    if (!req.url.startsWith("/repos/rfresh2/ZenithProxy")) {
+    let agent = req.headers['user-agent']
+    console.log("agent: " + agent)
+    if (!req.url.startsWith("/repos/rfresh2/ZenithProxy") || agent == null || !agent.startsWith("ZenithProxy")) {
       res.status(500)
       next(new Error("Unsupported route: " + req.url))
       return;
