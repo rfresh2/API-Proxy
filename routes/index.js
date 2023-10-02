@@ -25,6 +25,7 @@ router.get('/**', cache('2 minutes'), async (req, res, next) => {
     }
     let reqHeaders = enforcedHeaders;
     reqHeaders['Accept'] = req.headers['accept'];
+    reqHeaders['X-GitHub-Api-Version'] = req.headers['x-github-api-version'];
     const options = {
       headers: reqHeaders
     }
