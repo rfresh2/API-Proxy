@@ -37,7 +37,6 @@ router.get('/**', cache('2 minutes'), async (req, res, next) => {
     console.log(`${apiRes.statusCode} ${dest}`)
     res.status(apiRes.statusCode).set(apiRes.headers).send(data);
   } catch (error) {
-    error.
     next(error);
   }
 });
