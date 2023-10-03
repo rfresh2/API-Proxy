@@ -8,6 +8,7 @@ const crypto = require('crypto');
 
 const API_BASE_URL = "https://api.github.com";
 const API_KEY_VALUE = process.env.API_KEY_VALUE;
+const BASE_PATH = "/repos/rfresh2/ZenithProxy/releases";
 const enforcedHeaders = {
   "User-Agent": "ZenithProxy/1.1",
   "Connection": "close",
@@ -26,13 +27,14 @@ var reqBucketEpochSec = new Date().getTime() / 1000;
 router.get('/**', async (req, res, next) => {
   try {
     // only proxy for my own repo. i don't forsee any valid use case otherwise
-    if (!req.url.startsWith("/repos/rfresh2/ZenithProxy/releases")) {
+    if (!req.url.startsWith(BASE_PATH)) {
       res.status(500)
       next(new Error("Unsupported route: " + req.url))
       return;
     }
     countReq();
     const dest = `${API_BASE_URL}${req.url}`
+    const agent = req.headers['user-agent'] || "?";
     const cacheKey = getCacheKey(req, dest);
     const cachedRes = reqCache.get(cacheKey);
     const cacheHit = cachedRes !== undefined;
@@ -40,7 +42,7 @@ router.get('/**', async (req, res, next) => {
     if (!cacheHit && proxiedRes.statusCode === 200) {
       reqCache.set(cacheKey, new CacheResponse(proxiedRes.statusCode, proxiedRes.headers, proxiedRes.body, new Date()));
     }
-    logT(`${proxiedRes.statusCode} ${cacheHit} ${dest}`)
+    logT(`${proxiedRes.statusCode} ${cacheHit} ${agent} ${req.url.replace(BASE_PATH, '')}`)
     res.status(proxiedRes.statusCode).set(proxiedRes.headers).send(proxiedRes.body);
   } catch (error) {
     next(error);
