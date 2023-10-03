@@ -20,6 +20,9 @@ const reqCache = new NodeCache({
   forceString: true
 });
 
+var reqCount = 0;
+var reqBucketEpochSec = new Date().getTime() / 1000;
+
 router.get('/**', async (req, res, next) => {
   try {
     // only proxy for my own repo. i don't forsee any valid use case otherwise
@@ -28,11 +31,12 @@ router.get('/**', async (req, res, next) => {
       next(new Error("Unsupported route: " + req.url))
       return;
     }
+    countReq();
     const dest = `${API_BASE_URL}${req.url}`
     const cacheKey = getCacheKey(req, dest);
     const cachedRes = reqCache.get(cacheKey);
     const cacheHit = cachedRes !== undefined;
-    var proxiedRes = await proxyWithCache(req, dest, cachedRes);
+    const proxiedRes = await proxyWithCache(req, dest, cachedRes);
     if (!cacheHit && proxiedRes.statusCode === 200) {
       reqCache.set(cacheKey, new CacheResponse(proxiedRes.statusCode, proxiedRes.headers, proxiedRes.body, new Date()));
     }
@@ -73,6 +77,16 @@ function getCacheKey(req, dest) {
   }
   const headersStr = JSON.stringify(headers);
   return crypto.createHash("md5").update(`${dest}${headersStr}`).digest("base64");
+}
+
+function countReq() {
+  const nowEpochSec = new Date().getTime() / 1000;
+  if (nowEpochSec - reqBucketEpochSec > 300) {
+    logT(`${reqCount} requests in prev 5 minute bucket`)
+    reqCount = 0;
+    reqBucketEpochSec = nowEpochSec;
+  }
+  reqCount++;
 }
 
 class CacheResponse {
