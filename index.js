@@ -27,6 +27,35 @@ app.use(limiter);
 app.use(speedLimiter)
 app.set('trust proxy', 1);
 
+function logT(msg) {
+  console.log(`${new Date().toISOString()} ${msg}`)
+}
+
+var reqCount = 0;
+var reqBucketEpochSec = new Date().getTime() / 1000;
+
+function countReq() {
+  const nowEpochSec = new Date().getTime() / 1000;
+  if (nowEpochSec - reqBucketEpochSec > 300) {
+    logT(`${reqCount} requests in prev 5 minute bucket`)
+    reqCount = 0;
+    reqBucketEpochSec = nowEpochSec;
+  }
+  reqCount++;
+}
+
+const onResponse = (req, res, next) => {
+  res.on("finish", () => {
+    countReq();
+    const cacheHit = res.getHeaders()['apicache-store'] !== undefined ? "HIT" : "MISS"
+    const agent = req.headers['user-agent'] || "?";
+    logT(`${res.statusCode} ${cacheHit} ${agent} ${req.url}`)
+  });
+  next();
+}
+
+app.use(onResponse)
+
 // Routes
 app.use('/', require('./routes'));
 

@@ -1,5 +1,4 @@
 const errorHandler = (err, req, res, next) => {
-  logT(err.message);
   res.status(500).json({
     error: err.message
   })
