@@ -31,7 +31,7 @@ let cache = apicache.options({
   debug: false
 }).middleware;
 
-router.get('/**', cache('1 minute'), async (req, res, next) => {
+router.get('/**', cache('3 minutes'), async (req, res, next) => {
   try {
     // only proxy for my own repo. i don't forsee any valid use case otherwise
     if (!req.url.startsWith(BASE_PATH)) {
