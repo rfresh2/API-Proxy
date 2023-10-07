@@ -3,6 +3,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down')
 const errorHandler = require('./middleware/error');
+const MetricsClient = require('./metrics');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 5000;
@@ -34,10 +35,27 @@ function logT(msg) {
 var reqCount = 0;
 var reqBucketEpochSec = new Date().getTime() / 1000;
 
+const metricsClient = new MetricsClient()
+const metricsEnabled = process.env.METRICS !== undefined && process.env.METRICS === "true"
+
+async function startMetrics() {
+  if (metricsEnabled) {
+    await metricsClient.start()
+  }
+}
+startMetrics().catch(err => {
+  console.log("Error starting metrics client: " + err)
+})
+
 function countReq() {
   const nowEpochSec = new Date().getTime() / 1000;
   if (nowEpochSec - reqBucketEpochSec > 300) {
     logT(`${reqCount} requests in prev 5 minute bucket`)
+    if (metricsEnabled) {
+      metricsClient.addRequestCount(reqCount).catch(err => {
+        console.log("Error writing metrics: " + err)
+      })
+    }
     reqCount = 0;
     reqBucketEpochSec = nowEpochSec;
   }

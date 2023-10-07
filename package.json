@@ -18,7 +18,8 @@
     "express-slow-down": "^1.6.0",
     "needle": "^3.2.0",
     "node-cache": "^5.1.2",
-    "apicache": "^1.6.3"
+    "apicache": "^1.6.3",
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"
