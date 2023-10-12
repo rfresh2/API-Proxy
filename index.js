@@ -52,9 +52,13 @@ function countReq() {
   if (nowEpochSec - reqBucketEpochSec > 300) {
     logT(`${reqCount} requests in prev 5 minute bucket`)
     if (metricsEnabled) {
-      metricsClient.addRequestCount(reqCount).catch(err => {
+      try {
+        metricsClient.addRequestCount(reqCount).catch(err => {
+          console.log("Error writing metrics: " + err)
+        })
+      } catch (err) {
         console.log("Error writing metrics: " + err)
-      })
+      }
     }
     reqCount = 0;
     reqBucketEpochSec = nowEpochSec;
