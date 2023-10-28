@@ -18,11 +18,8 @@ const limiter = rateLimit({
 const speedLimiter = slowDown({
   windowMS: 10 * 60 * 1000, // 10 mins
   delayAfter: 800,
-  delayMs: 500,
-  maxDelayMs: 3000,
-  onLimitReached: function (req, res, options) {
-    console.log('!Speed limiter reached limit!')
-  }
+  delayMs: () => 500,
+  maxDelayMs: 3000
 });
 app.use(limiter);
 app.use(speedLimiter)
