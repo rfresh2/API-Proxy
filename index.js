@@ -4,6 +4,7 @@ const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down')
 const errorHandler = require('./middleware/error');
 const MetricsClient = require('./metrics');
+const schedule = require('node-schedule');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 5000;
@@ -30,7 +31,6 @@ function logT(msg) {
 }
 
 var reqCount = 0;
-var reqBucketEpochSec = new Date().getTime() / 1000;
 
 const metricsClient = new MetricsClient()
 const metricsEnabled = process.env.METRICS !== undefined && process.env.METRICS === "true"
@@ -38,36 +38,32 @@ const metricsEnabled = process.env.METRICS !== undefined && process.env.METRICS 
 async function startMetrics() {
   if (metricsEnabled) {
     await metricsClient.start()
+    schedule.scheduleJob('*/5 * * * *', async () => {
+      try {
+        logT(`Request Count: ${reqCount}`)
+        let c = reqCount;
+        reqCount = 0;
+        await metricsClient.addRequestCount(c).catch(err => {
+          logT("Error writing metrics: " + err)
+        });
+      } catch (err) {
+        logT("Error writing metrics: " + err)
+      }
+    });
   }
-}
+};
+
 startMetrics().catch(err => {
   console.log("Error starting metrics client: " + err)
 })
 
-function countReq() {
-  const nowEpochSec = new Date().getTime() / 1000;
-  if (nowEpochSec - reqBucketEpochSec > 300) {
-    logT(`${reqCount} requests in prev 5 minute bucket`)
-    if (metricsEnabled) {
-      try {
-        metricsClient.addRequestCount(reqCount).catch(err => {
-          console.log("Error writing metrics: " + err)
-        })
-      } catch (err) {
-        console.log("Error writing metrics: " + err)
-      }
-    }
-    reqCount = 0;
-    reqBucketEpochSec = nowEpochSec;
-  }
-  reqCount++;
-}
-
 const onResponse = (req, res, next) => {
   res.on("finish", () => {
-    countReq();
-    const cacheHit = res.getHeaders()['apicache-store'] !== undefined ? "HIT" : "MISS"
-    const agent = req.headers['user-agent'] || "?";
+    if (metricsEnabled) reqCount++
+    const requestListCacheHit = res.getHeaders()['zenithproxy-cache'] !== undefined ? "ZHIT" : "ZMISS"
+    const apiCacheHit = res.getHeaders()['apicache-store'] !== undefined ? "HIT" : "MISS"
+    const cacheHit = requestListCacheHit === "ZHIT" ? requestListCacheHit : apiCacheHit
+    const agent = req.headers['user-agent'] || "?"
     logT(`${res.statusCode} ${cacheHit} ${agent} ${req.url}`)
   });
   next();
