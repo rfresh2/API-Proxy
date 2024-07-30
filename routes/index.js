@@ -173,7 +173,7 @@ async function updateReleaseCache() {
 const cacheRefreshTask = new AsyncTask('cacheRefresh', updateReleaseCache, (err) => {
     logT("Error in cache refresh task: " + err)
 })
-const cacheRefreshJob = new SimpleIntervalJob({ seconds: 20 }, cacheRefreshTask)
+const cacheRefreshJob = new SimpleIntervalJob({ minutes: 3 }, cacheRefreshTask)
 
 async function startReleaseCacheUpdater() {
     logT("Starting releases list updater")
