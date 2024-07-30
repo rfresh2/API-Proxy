@@ -4,7 +4,9 @@ const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down')
 const errorHandler = require('./middleware/error');
 const MetricsClient = require('./metrics');
-const schedule = require('node-schedule');
+const { ToadScheduler, SimpleIntervalJob, AsyncTask } = require('toad-scheduler')
+
+const scheduler = new ToadScheduler()
 require('dotenv').config();
 
 const PORT = process.env.PORT || 5000;
@@ -35,21 +37,26 @@ var reqCount = 0;
 const metricsClient = new MetricsClient()
 const metricsEnabled = process.env.METRICS !== undefined && process.env.METRICS === "true"
 
+const metricsTask = new AsyncTask('metrics', async () => {
+  try {
+    logT(`Request Count: ${reqCount}`)
+    let c = reqCount;
+    reqCount = 0;
+    await metricsClient.addRequestCount(c).catch(err => {
+      logT("Error writing metrics: " + err)
+    });
+  } catch (err) {
+    logT("Error writing metrics: " + err)
+  }
+}, (err) => {
+  logT("Error in metrics task: " + err)
+})
+const metricsJob = new SimpleIntervalJob({ minutes: 5 }, metricsTask)
+
 async function startMetrics() {
   if (metricsEnabled) {
     await metricsClient.start()
-    schedule.scheduleJob('*/5 * * * *', async () => {
-      try {
-        logT(`Request Count: ${reqCount}`)
-        let c = reqCount;
-        reqCount = 0;
-        await metricsClient.addRequestCount(c).catch(err => {
-          logT("Error writing metrics: " + err)
-        });
-      } catch (err) {
-        logT("Error writing metrics: " + err)
-      }
-    });
+    scheduler.addSimpleIntervalJob(metricsJob)
   }
 };
 

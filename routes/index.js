@@ -3,7 +3,9 @@ const router = express.Router();
 const needle = require('needle');
 const crypto = require('crypto');
 const apicache = require('apicache');
-const schedule = require('node-schedule');
+const { ToadScheduler, SimpleIntervalJob, AsyncTask } = require('toad-scheduler')
+
+const scheduler = new ToadScheduler()
 
 const API_BASE_URL = "https://api.github.com";
 const API_KEY_VALUE = process.env.API_KEY_VALUE;
@@ -168,10 +170,15 @@ async function updateReleaseCache() {
 
 }
 
+const cacheRefreshTask = new AsyncTask('cacheRefresh', updateReleaseCache, (err) => {
+    logT("Error in cache refresh task: " + err)
+})
+const cacheRefreshJob = new SimpleIntervalJob({ seconds: 20 }, cacheRefreshTask)
+
 async function startReleaseCacheUpdater() {
     logT("Starting releases list updater")
     updateReleaseCache()
-    schedule.scheduleJob('*/3 * * * *', updateReleaseCache)
+    scheduler.addSimpleIntervalJob(cacheRefreshJob)
 }
 
 if (RELEASES_LIST_CACHE_ENABLED) {
