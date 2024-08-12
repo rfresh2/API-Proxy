@@ -63,10 +63,14 @@ const cache = apicache.options({
 }).middleware;
 
 const releaseListMiddleware = (req, res, next) => {
-    if (!RELEASES_LIST_CACHE_ENABLED) next()
+    if (!RELEASES_LIST_CACHE_ENABLED) {
+        next()
+        return
+    }
     if (releasesCachedResponse === undefined) {
         logT("Release cache not ready")
         next()
+        return
     }
 
     // check if url path equals BASE_PATH, ignoring query params
