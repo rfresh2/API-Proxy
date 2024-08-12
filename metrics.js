@@ -12,17 +12,14 @@ class MetricsClient {
             ssl: {
                 rejectUnauthorized: false
             },
+            connectionTimeoutMillis: 10000,
+            idleTimeoutMillis: 30000,
             max: 2,
         })
     }
 
-    async start() {
-        await this.pool.connect()   
-        console.log("Connected to metrics DB")
-    }
-
     async stop() {
-        await this.pool.stop()
+        await this.pool.end()
         console.log("Disconnected from metrics DB")
     }
 
@@ -31,7 +28,9 @@ class MetricsClient {
             text: 'INSERT INTO api_proxy_request_count_metrics (time, request_count) VALUES ($1, $2)',
             values: [new Date().toISOString(), requestCount],
         }
-        await this.pool.query(query)
+        let client = await this.pool.connect()
+        await client.query(query)
+        client.release()
     }
 }
 

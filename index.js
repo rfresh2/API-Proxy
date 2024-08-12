@@ -55,7 +55,6 @@ const metricsJob = new SimpleIntervalJob({ minutes: 5 }, metricsTask)
 
 async function startMetrics() {
   if (metricsEnabled) {
-    await metricsClient.start()
     scheduler.addSimpleIntervalJob(metricsJob)
   }
 };
