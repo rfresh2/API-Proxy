@@ -16,6 +16,10 @@ class MetricsClient {
             idleTimeoutMillis: 30000,
             max: 2,
         })
+
+        this.pool.on('error', (err, client) => {
+            console.log('PG pool error', err)
+        })
     }
 
     async stop() {
@@ -28,9 +32,7 @@ class MetricsClient {
             text: 'INSERT INTO api_proxy_request_count_metrics (time, request_count) VALUES ($1, $2)',
             values: [new Date().toISOString(), requestCount],
         }
-        let client = await this.pool.connect()
-        await client.query(query)
-        client.release()
+        await this.pool.query(query)
     }
 }
 
