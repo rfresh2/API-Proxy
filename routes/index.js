@@ -90,7 +90,7 @@ const releaseListMiddleware = (req, res, next) => {
     }
 }
 
-router.get('/**', [releaseListMiddleware, cache('3 minutes')], async (req, res, next) => {
+router.get(/\/(.*)/, [releaseListMiddleware, cache('3 minutes')], async (req, res, next) => {
   try {
     // only proxy for my own repo. i don't forsee any valid use case otherwise
     if (!req.url.startsWith(BASE_PATH)) {
