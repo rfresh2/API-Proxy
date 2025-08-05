@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down')
-const errorHandler = require('./middleware/error');
+const errorHandler = require('./middleware/error').default;
 const MetricsClient = require('./metrics');
 const { ToadScheduler, SimpleIntervalJob, AsyncTask } = require('toad-scheduler')
 
@@ -66,7 +66,7 @@ startMetrics().catch(err => {
 const onResponse = (req, res, next) => {
   res.on("finish", () => {
     if (metricsEnabled) reqCount++
-    const requestListCacheHit = res.getHeaders()['zenithproxy-cache'] !== undefined ? "ZHIT" : "ZMISS"
+    const requestListCacheHit = res.getHeaders()['zenithproxy-cache'] !== undefined ? "Z" + res.getHeaders()['zenithproxy-cache'] : "ZMISS"
     const apiCacheHit = res.getHeaders()['apicache-store'] !== undefined ? "HIT" : "MISS"
     const cacheHit = requestListCacheHit === "ZHIT" ? requestListCacheHit : apiCacheHit
     const agent = req.headers['user-agent'] || "?"
