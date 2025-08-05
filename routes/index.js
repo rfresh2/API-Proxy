@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const needle = require('needle');
 const crypto = require('crypto');
 const apicache = require('apicache');
-const { ToadScheduler, SimpleIntervalJob, AsyncTask } = require('toad-scheduler');
+const { ToadScheduler, SimpleIntervalJob, AsyncTask } = require('toad-scheduler')
 
 const scheduler = new ToadScheduler()
 
@@ -71,7 +72,6 @@ const releaseListMiddleware = (req, res, next) => {
         next()
         return
     }
-
     if (releasesCachedResponse === undefined) {
         logT("Release cache not ready")
         next()
@@ -103,16 +103,8 @@ router.get(/\/(.*)/, [releaseListMiddleware, cache('3 minutes')], async (req, re
       next(new Error("Unsupported route: " + req.url))
       return;
     }
-    logT(`Proxying request: ${req.method} ${req.url}`);
     const proxiedRes = await proxyRequest(req, `${API_BASE_URL}${req.url}`);
-    const body = await proxiedRes.json();
-    const responseHeaders = {
-        "Content-Type": "application/json",
-        "ZenithProxy-Cache": "MISS"
-    };
-    logT(`Received response: ${proxiedRes.status} ${proxiedRes.statusText} ${JSON.stringify(responseHeaders)}`);
-
-    res.status(proxiedRes.status).set(responseHeaders).send(body);
+    res.status(proxiedRes.statusCode).set(proxiedRes.headers).send(proxiedRes.body);
   } catch (error) {
     next(error);
   }
@@ -125,7 +117,7 @@ async function proxyRequest(req, dest) {
   const options = {
     headers: reqHeaders
   }
-  return await fetch(dest, options)
+  return await needle('get', dest, options);
 }
 
 async function fetchReleasesResponse() {
@@ -143,12 +135,11 @@ async function fetchReleasesResponse() {
     // iterate over pages until we find the latest release for each channel
     for (let page = 1; page <= 5; page++) {
         const url = `${RELEASES_LIST_URL}&page=${page}`
-        
-        const response = await fetch(url, options)
-        if (response.status !== 200) {
+        const response = await needle('get', url, options)
+        if (response.statusCode !== 200) {
             throw new Error(`Failed to fetch releases: ${response.statusCode}`)
         }
-        const releases = await response.json();
+        const releases = response.body
         // body is an array of release objects
         for (const release of releases) {
             if (release.draft) continue
