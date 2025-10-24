@@ -187,14 +187,9 @@ const cacheRefreshJob = new SimpleIntervalJob({ minutes: 3 }, cacheRefreshTask)
 
 async function startReleaseCacheUpdater() {
     logT("Starting releases list updater")
-    updateReleaseCache()
+    await updateReleaseCache()
     scheduler.addSimpleIntervalJob(cacheRefreshJob)
 }
 
-if (RELEASES_LIST_CACHE_ENABLED) {
-    startReleaseCacheUpdater().catch(err => {
-        logT("Error starting release cache updater: " + err)
-    })
-}
-
 module.exports = router;
+module.exports.startReleaseCacheUpdater = startReleaseCacheUpdater;

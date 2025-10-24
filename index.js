@@ -78,7 +78,8 @@ const onResponse = (req, res, next) => {
 app.use(onResponse)
 
 // Routes
-app.use('/', require('./routes'));
+const routes = require('./routes');
+app.use('/', routes);
 
 // Enable cors
 app.use(cors());
@@ -86,6 +87,21 @@ app.use(cors());
 // Error handler middleware
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+async function startServer() {
+  const RELEASES_LIST_CACHE_ENABLED = process.env.RELEASES_LIST_CACHE !== undefined && process.env.RELEASES_LIST_CACHE === "true";
+  
+  if (RELEASES_LIST_CACHE_ENABLED) {
+    logT("Waiting for initial release cache update...");
+    await routes.startReleaseCacheUpdater();
+    logT("Initial release cache update completed");
+  }
+  
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+startServer().catch(err => {
+  console.error("Error starting server: " + err);
+  process.exit(1);
 });
