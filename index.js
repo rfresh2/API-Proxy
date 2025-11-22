@@ -15,11 +15,11 @@ const app = express();
 
 // Rate Limiting
 const limiter = rateLimit({
-  windowMS: 10 * 60 * 1000, // 10 mins
+  windowMs: 10 * 60 * 1000, // 10 mins
   max: 1000,
 });
 const speedLimiter = slowDown({
-  windowMS: 10 * 60 * 1000, // 10 mins
+  windowMs: 10 * 60 * 1000, // 10 mins
   delayAfter: 800,
   delayMs: () => 500,
   maxDelayMs: 3000
