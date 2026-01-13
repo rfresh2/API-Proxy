@@ -4,6 +4,8 @@ const needle = require('needle');
 const crypto = require('crypto');
 const apicache = require('apicache');
 const { ToadScheduler, SimpleIntervalJob, AsyncTask } = require('toad-scheduler')
+const diff = require('diff');
+
 
 const scheduler = new ToadScheduler()
 
@@ -50,7 +52,7 @@ function logT(msg) {
     console.log(`${new Date().toISOString()} ${msg}`)
   }
 
-let releasesCachedResponse = undefined
+let releasesCachedResponse = undefined;
 
 const cache = apicache.options({
   appendKey: (req, res) => {
@@ -174,7 +176,22 @@ async function fetchReleasesResponse() {
 
 async function updateReleaseCache() {
     try {
+        const priorReleases = releasesCachedResponse
         releasesCachedResponse = await fetchReleasesResponse()
+        if (priorReleases && JSON.stringify(priorReleases) !== JSON.stringify(releasesCachedResponse)) {
+            logT("Release cache updated with changes")
+            const diffs = diff.diffJson(priorReleases, releasesCachedResponse)
+            diffs.forEach(part => {
+                if (part.added || part.removed) {
+                    const prefix = part.added ? '+' : '-'
+                    part.value.split('\n').forEach(line => {
+                        if (line) {
+                            console.log(`${prefix} ${line}`)
+                        }
+                    })
+                }
+            })
+        }
         logT("Updated release cache")
     } catch (err) {
         logT("Error updating release cache: " + err)
