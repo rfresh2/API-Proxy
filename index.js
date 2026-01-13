@@ -4,6 +4,7 @@ const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down')
 const errorHandler = require('./middleware/error');
 const MetricsClient = require('./metrics');
+const readline = require('readline');
 const { ToadScheduler, SimpleIntervalJob, AsyncTask } = require('toad-scheduler')
 
 const scheduler = new ToadScheduler()
@@ -95,6 +96,19 @@ async function startServer() {
     await routes.startReleaseCacheUpdater();
     logT("Initial release cache update completed");
   }
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false
+  });
+  
+  rl.on('line', (line) => {
+    if (line.trim() === 'u') {
+      logT("Updating release cache...");
+      routes.updateReleaseCache();
+    }
+  });
   
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

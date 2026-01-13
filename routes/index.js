@@ -10,6 +10,7 @@ const scheduler = new ToadScheduler()
 const API_BASE_URL = "https://api.github.com";
 const API_KEY_VALUE = process.env.API_KEY_VALUE;
 const RELEASES_LIST_CACHE_ENABLED = process.env.RELEASES_LIST_CACHE !== undefined && process.env.RELEASES_LIST_CACHE === "true";
+const AUTO_UPDATE_RELEASES_CACHE = process.env.AUTO_UPDATE_RELEASES_CACHE !== undefined && process.env.AUTO_UPDATE_RELEASES_CACHE === "true";
 const BASE_PATH = "/repos/rfresh2/ZenithProxy/releases";
 const RELEASES_LIST_PATH = "/repos/rfresh2/ZenithProxy/releases?per_page=100";
 const RELEASES_LIST_URL = `${API_BASE_URL}${RELEASES_LIST_PATH}`
@@ -187,10 +188,15 @@ const cacheRefreshTask = new AsyncTask('cacheRefresh', updateReleaseCache, (err)
 const cacheRefreshJob = new SimpleIntervalJob({ minutes: 3 }, cacheRefreshTask)
 
 async function startReleaseCacheUpdater() {
-    logT("Starting releases list updater")
     await updateReleaseCache()
-    scheduler.addSimpleIntervalJob(cacheRefreshJob)
+    if (AUTO_UPDATE_RELEASES_CACHE) {
+        logT("Starting auto release cache updater")
+        scheduler.addSimpleIntervalJob(cacheRefreshJob)
+    } else {
+        logT("Auto release cache updater is disabled")
+    }
 }
 
 module.exports = router;
 module.exports.startReleaseCacheUpdater = startReleaseCacheUpdater;
+module.exports.updateReleaseCache = updateReleaseCache;
