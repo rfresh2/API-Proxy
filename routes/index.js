@@ -33,7 +33,7 @@ const MC_VERSIONS = [
     "1.21.8",
     "1.21.10",
     "1.21.11",
-    "26.1.0"
+    "26.1.1"
 ]
 const PLATFORMS = [
     "java",
