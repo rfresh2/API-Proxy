@@ -141,7 +141,7 @@ async function fetchReleasesResponse() {
     const releaseChannelSet = new Set(RELEASE_CHANNELS)
 
     // iterate over pages until we find the latest release for each channel
-    for (let page = 1; page <= 5; page++) {
+    for (let page = 1; page <= 15; page++) {
         const url = `${RELEASES_LIST_URL}&page=${page}`
         const response = await needle('get', url, options)
         if (response.statusCode !== 200) {
