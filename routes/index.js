@@ -195,6 +195,7 @@ async function updateReleaseCache() {
                 }
             })
         }
+        apicache.clear()
         logT("Updated release cache")
     } catch (err) {
         logT("Error updating release cache: " + err)
